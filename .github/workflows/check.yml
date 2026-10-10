@@ -33,7 +33,9 @@ jobs:
       - name: Get VPN Gate nodes + check via Cloudflare Worker + build page
         run: python vpngate.py
         env:
-          CHECK_WORKER: "https://ed.2026926.kdns.fr/check?sstp=vpn:vpn@"
+          # ⚠️ 指向新建的检测 Worker（vpngate-check），单斜杠 /check，末尾保留 @
+          # ed.2026926.kdns.fr 已让回给 edgetunnel，检测接口改到 check.2026926.kdns.fr
+          CHECK_WORKER: "https://check.2026926.kdns.fr/check?sstp=vpn:vpn@"
           CHECK_CONCURRENCY: "32"
           CHECK_TIMEOUT: "90"
 
@@ -45,10 +47,11 @@ jobs:
           echo "Pages API status: $code"
           if [ "$code" = "404" ]; then
             echo "首次运行: 启用 GitHub Pages"
-            curl -sS -X PUT \
+            curl -sS -X POST \
               -H "Authorization: Bearer $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
               -H "Content-Type: application/json" \
-              -d '{"build_type":"workflow","source":{"branches":["main"],"path":"/public"}}' \
+              -d '{"build_type":"workflow"}' \
               "https://api.github.com/repos/$GITHUB_REPOSITORY/pages"
             echo
             sleep 10
